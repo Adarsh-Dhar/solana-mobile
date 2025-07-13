@@ -1,51 +1,73 @@
-# Welcome to your Expo app 👋
+# DineTime - Solana Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native restaurant discovery app with Solana wallet integration using Mobile Wallet Adapter (MWA) 2.0.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Solana Wallet Authentication**: Connect your Solana wallet to sign up and sign in
+- **Mobile Wallet Adapter 2.0**: Secure communication between dApp and MWA-compliant wallet apps
+- **Guest Mode**: Continue using the app without wallet connection
+- **Restaurant Discovery**: Browse and explore restaurants
+- **Modern UI**: Built with Tailwind CSS and NativeWind
 
+## Authentication
+
+This app uses Solana Mobile Wallet Adapter for authentication instead of traditional email/password:
+
+### Wallet Connection
+- Users can connect their Solana wallet for secure authentication
+- Supports MWA-compliant wallet apps installed on the device
+- Stores authentication tokens for seamless reconnection
+
+### Guest Mode
+- Users can continue as guests without wallet connection
+- Limited functionality but full app access
+
+## Setup
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the development server:
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Run on device/simulator:
+   - Press `i` for iOS simulator
+   - Press `a` for Android emulator
+   - Scan QR code with Expo Go app
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Dependencies
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- `@solana-mobile/mobile-wallet-adapter-protocol-web3js`: MWA protocol wrapper
+- `@solana-mobile/mobile-wallet-adapter-protocol`: Core MWA library
+- `@solana/web3.js`: Solana web3 utilities
+- `react-native-quick-base64`: Base64 encoding for React Native
 
-## Get a fresh project
+## Architecture
 
-When you're ready, run:
+- **Authentication**: Solana wallet-based using MWA 2.0
+- **State Management**: AsyncStorage for persistent data
+- **UI Framework**: React Native with Tailwind CSS
+- **Navigation**: Expo Router with file-based routing
 
-```bash
-npm run reset-project
-```
+## Wallet Integration
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+The app uses Mobile Wallet Adapter to:
+- Establish secure sessions with wallet apps
+- Request wallet authorization
+- Handle transaction signing (future feature)
+- Manage authentication tokens
+
+## Development
+
+This project uses Expo with React Native and follows the file-based routing pattern. The authentication flow has been updated to use Solana wallets instead of Firebase authentication.
 
 ## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-# solana-mobile
+- [Solana Mobile Wallet Adapter](https://docs.solana.com/developing/mobile-wallet-adapter)
+- [Expo documentation](https://docs.expo.dev/)
+- [React Native](https://reactnative.dev/)
