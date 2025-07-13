@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const profileRoutes = require('./routes/profile');
 const restaurantRoutes = require('./routes/restaurants');
 const reservationRoutes = require('./routes/reservations');
 const orderRoutes = require('./routes/orders');
@@ -47,6 +48,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/orders', orderRoutes);
