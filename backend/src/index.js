@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const dataRoutes = require('./routes/data');
+const matchesRoutes = require('./routes/matches');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -47,6 +48,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/matches', matchesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
