@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Wallet and authentication
+  solanaAddress     String    @unique
+  mobileAuthToken   String?
+  
+  // Off-chain profile data
+  username          String
+  bio               String?
+  age               Int?
+  gender            String?
+  location          String?   // Could be encrypted for privacy
+  profilePicture    String?
+  verificationStatus String   @default("UNVERIFIED") // VERIFIED, SUSPENDED
+  
+  // On-chain data relationships (1:1)
+  walletAnalysis    WalletAnalysis?
+  preferences       Preferences?
+  
+  // Relationships (1:m)
+  matches           Match[]
+  dateSuggestions   DateSuggestion[]
+
+  matchesAsUser2    Match[] @relation("MatchUser2")
+  matchesAsUser1    Match[] @relation("MatchUser1")
+}
+
+model WalletAnalysis {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  
+  // NFT data
+  nftCount          Int       @default(0)
+  pfpCollection     String?   // e.g., Mad Lads
+  topCollections    String[]  // Top 3 NFT collections
+  
+  // Token data
+  memecoinHoldings  Json?     // {token: string, amount: number}[]
+  governanceTokens  String[]  // e.g., $JUP, $RAY
+  tokenPortfolio    Json?     // Categorized holdings
+  
+  // Activity metrics
+  walletAge         DateTime? // First transaction
+  txFrequency       Float?    // Daily avg transactions
+  activeHours       Int[]     // Most active UTC hours [14,15,16]
+  defiActivity      String[]  // [jito, marginfi, kamino]
+  nftMarketplaces   String[]  // [tensor, magic-eden]
+  
+  // Reputation metrics
+  sybilScore        Float?    @default(0.0)
+  reputation        Json?     // {source: string, score: float}[]
+  airdropsReceived  String[]  // Notable airdrops
+  rugCount          Int       @default(0) // Times rugged
+  
+  // Behavioral analysis
+  riskTolerance     String?   // HIGH, MEDIUM, LOW
+  tradingStyle      String?   // DAY_TRADER, SWING, HODLER
+  culturalAlignment String[]  // [MEME, DEFI, GAMING, ART]
+}
+
+model Preferences {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  
+  // Dating preferences
+  ageRange          Int[]     @default([25, 40])
+  genderPreference  String?
+  maxDistance       Int?      // In km/miles
+  
+  // On-chain preferences
+  desiredTraits     Json?     // {trait: weight} e.g. {"has_mad_lads": 0.9}
+  avoidTraits       String[]  // e.g. ["rug_puller", "sandwich_attacker"]
+  minSybilScore     Float?    @default(0.7)
+  chainActivityReq  Json?     // {activity: minLevel} e.g. {"nft_trading": 3}
+}
+
+model Match {
+  id                String    @id @default(uuid())
+  createdAt         DateTime  @default(now())
+  
+  // Participants
+  user1Id           String
+  user2Id           String
+  user1             User      @relation("MatchUser1", fields: [user1Id], references: [id])
+  user2             User      @relation("MatchUser2", fields: [user2Id], references: [id])
+  
+  // Match metrics
+  compatibilityScore Float
+  matchReasons       String[] // e.g. ["BONK_holders", "Mad_Lads"]
+  status            MatchStatus @default(PENDING)
+  
+  // Relationships
+  dateSuggestions   DateSuggestion[]
+
+  User User[]
+}
+
+model DateSuggestion {
+  id                String    @id @default(uuid())
+  createdAt         DateTime  @default(now())
+  
+  // Related entities
+  matchId           String
+  match             Match     @relation(fields: [matchId], references: [id])
+  suggestedById     String?   // Optional: who suggested it
+  suggestedBy       User?     @relation(fields: [suggestedById], references: [id])
+  
+  // Date details
+  title             String    // e.g. "BONK-themed cafe meetup"
+  description       String?
+  location          String
+  time              DateTime?
+  onchainReference  String?   // NFT mint address for this date
+  status            DateStatus @default(PROPOSED)
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum DateStatus {
+  PROPOSED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}

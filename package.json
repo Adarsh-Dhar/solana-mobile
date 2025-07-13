@@ -23,6 +23,7 @@
     "@solana-mobile/mobile-wallet-adapter-protocol": "^2.2.2",
     "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.2",
     "@solana/web3.js": "^1.98.2",
+    "axios": "^1.10.0",
     "expo": "^53.0.19",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",

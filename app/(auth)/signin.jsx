@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "../../assets/images/dinetimelogo.png";
 const entryImg = require("../../assets/images/Frame.png");
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { connectWallet, isWalletConnected } from "../../utils/solanaWallet";
+import { authService } from "../../utils/auth";
 
 const Signin = () => {
   const router = useRouter();
@@ -28,29 +28,20 @@ const Signin = () => {
   const handleConnectWallet = async () => {
     setIsConnecting(true);
     try {
-      const result = await connectWallet();
+      const result = await authService.loginWithWallet();
       
-      if (result.success) {
-        // Store wallet address as user identifier
-        await AsyncStorage.setItem("userEmail", result.walletAddress);
-        await AsyncStorage.setItem("isGuest", "false");
-        
-        Alert.alert(
-          "Wallet Connected!",
-          `Successfully connected to wallet: ${result.walletAddress.slice(0, 8)}...${result.walletAddress.slice(-4)}`,
-          [{ text: "OK", onPress: () => router.push("/home") }]
-        );
-      } else {
-        Alert.alert(
-          "Connection Failed",
-          result.error || "Failed to connect wallet. Please try again.",
-          [{ text: "OK" }]
-        );
-      }
-    } catch (error) {
+      await AsyncStorage.setItem("isGuest", "false");
+      
       Alert.alert(
-        "Connection Error",
-        "An unexpected error occurred while connecting to wallet.",
+        "Login Successful!",
+        `Successfully signed in with wallet: ${result.user.solanaAddress.slice(0, 8)}...${result.user.solanaAddress.slice(-4)}`,
+        [{ text: "OK", onPress: () => router.push("/home") }]
+      );
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert(
+        "Login Failed",
+        error.message || "Failed to sign in with wallet. Please try again.",
         [{ text: "OK" }]
       );
     } finally {
@@ -79,50 +70,30 @@ const Signin = () => {
                 <ActivityIndicator color="#2b2b2b" size="small" />
               ) : (
                 <Text className="text-lg font-semibold text-center text-black">
-                  Connect Wallet
+                  Connect Wallet & Sign In
                 </Text>
               )}
             </TouchableOpacity>
 
-            <View className="flex justify-center items-center">
-              <TouchableOpacity
-                className="flex flex-row justify-center mt-5 p-2 items-center"
-                onPress={() => router.push("/signup")}
-              >
-                <Text className="text-white font-semibold">
-                  Don't have a wallet?{" "}
-                </Text>
-                <Text className="text-base font-semibold underline text-[#f49b33]">
-                  Sign up
-                </Text>
-              </TouchableOpacity>
-
-              <Text className="text-center text-base font-semibold mb-4 text-white">
-                <View className="border-b-2 border-[#f49b33] p-2 mb-1 w-24" />{" "}
-                or{" "}
-                <View className="border-b-2 border-[#f49b33] p-2 mb-1 w-24" />
+            <TouchableOpacity
+              onPress={handleGuest}
+              className="p-4 my-4 bg-transparent border border-white rounded-lg"
+            >
+              <Text className="text-lg font-semibold text-center text-white">
+                Continue as Guest
               </Text>
-              <TouchableOpacity
-                className="flex flex-row justify-center mb-5 p-2 items-center"
-                onPress={handleGuest}
-              >
-                <Text className="text-white font-semibold">Continue as</Text>
-                <Text className="text-base font-semibold underline text-[#f49b33]">
-                  {" "}
-                  Guest User
-                </Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/signup")}
+              className="p-4 my-4 bg-transparent"
+            >
+              <Text className="text-lg font-semibold text-center text-[#f49b33]">
+                Don't have an account? Sign up
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View className="flex-1">
-          <Image
-            source={entryImg}
-            className="w-full h-full"
-            resizeMode="contain"
-          />
-        </View>
-        <StatusBar barStyle={"light-content"} backgroundColor={"#2b2b2b"} />
       </ScrollView>
     </SafeAreaView>
   );

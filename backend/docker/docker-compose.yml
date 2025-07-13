@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: dine-time-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dinetime_db
+      POSTGRES_USER: dinetime_user
+      POSTGRES_PASSWORD: dinetime_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dine-time-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: dine-time-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dine-time-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  dine-time-network:
+    driver: bridge 

@@ -7,6 +7,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -14,11 +15,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "../../assets/images/dinetimelogo.png";
 const entryImg = require("../../assets/images/Frame.png");
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { connectWallet } from "../../utils/solanaWallet";
+import { authService } from "../../utils/auth";
 
 const Signup = () => {
   const router = useRouter();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [username, setUsername] = useState("");
 
   const handleGuest = async () => {
     await AsyncStorage.setItem("isGuest", "true");
@@ -26,35 +28,29 @@ const Signup = () => {
   };
 
   const handleConnectWallet = async () => {
+    if (!username.trim()) {
+      Alert.alert("Username Required", "Please enter a username to continue.");
+      return;
+    }
+
     setIsConnecting(true);
     try {
-      console.log("Starting wallet connection...");
-      const result = await connectWallet();
-      console.log("Wallet connection result:", result);
+      console.log("Starting wallet registration...");
+      const result = await authService.registerWithWallet(username.trim());
+      console.log("Registration result:", result);
       
-      if (result.success) {
-        // Store wallet address as user identifier
-        await AsyncStorage.setItem("userEmail", result.walletAddress);
-        await AsyncStorage.setItem("isGuest", "false");
-        
-        Alert.alert(
-          "Wallet Connected!",
-          `Successfully connected to wallet: ${result.walletAddress.slice(0, 8)}...${result.walletAddress.slice(-4)}`,
-          [{ text: "OK", onPress: () => router.push("/home") }]
-        );
-      } else {
-        console.error("Wallet connection failed:", result.error);
-        Alert.alert(
-          "Connection Failed",
-          result.error || "Failed to connect wallet. Please try again.",
-          [{ text: "OK" }]
-        );
-      }
-    } catch (error) {
-      console.error("Wallet connection error:", error);
+      await AsyncStorage.setItem("isGuest", "false");
+      
       Alert.alert(
-        "Connection Error",
-        "An unexpected error occurred while connecting to wallet.",
+        "Registration Successful!",
+        `Successfully registered with wallet: ${result.user.solanaAddress.slice(0, 8)}...${result.user.solanaAddress.slice(-4)}`,
+        [{ text: "OK", onPress: () => router.push("/home") }]
+      );
+    } catch (error) {
+      console.error("Registration error:", error);
+      Alert.alert(
+        "Registration Failed",
+        error.message || "Failed to register with wallet. Please try again.",
         [{ text: "OK" }]
       );
     } finally {
@@ -68,65 +64,55 @@ const Signup = () => {
         <View className="m-2 flex justify-center items-center">
           <Image source={logo} style={{ width: 200, height: 100 }} />
           <Text className="text-lg text-center text-white font-bold mb-10">
-            Connect your Solana wallet
+            Create your account with Solana wallet
           </Text>
 
           <View className="w-5/6">
+            <TextInput
+              placeholder="Enter username"
+              placeholderTextColor="#666"
+              value={username}
+              onChangeText={setUsername}
+              className="p-4 mb-4 bg-white rounded-lg text-black"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
             <TouchableOpacity
               onPress={handleConnectWallet}
-              disabled={isConnecting}
+              disabled={isConnecting || !username.trim()}
               className={`p-4 my-4 rounded-lg flex-row justify-center items-center ${
-                isConnecting ? "bg-gray-500" : "bg-[#f49b33]"
+                isConnecting || !username.trim() ? "bg-gray-500" : "bg-[#f49b33]"
               }`}
             >
               {isConnecting ? (
                 <ActivityIndicator color="#2b2b2b" size="small" />
               ) : (
                 <Text className="text-lg font-semibold text-center text-black">
-                  Connect Wallet
+                  Connect Wallet & Register
                 </Text>
               )}
             </TouchableOpacity>
 
-            <View className="flex justify-center items-center">
-              <TouchableOpacity
-                className="flex flex-row justify-center mt-5 p-2 items-center"
-                onPress={() => router.push("/signin")}
-              >
-                <Text className="text-white font-semibold">
-                  Already have a wallet?{" "}
-                </Text>
-                <Text className="text-base font-semibold underline text-[#f49b33]">
-                  Sign in
-                </Text>
-              </TouchableOpacity>
-
-              <Text className="text-center text-base font-semibold mb-4 text-white">
-                <View className="border-b-2 border-[#f49b33] p-2 mb-1 w-24" />{" "}
-                or{" "}
-                <View className="border-b-2 border-[#f49b33] p-2 mb-1 w-24" />
+            <TouchableOpacity
+              onPress={handleGuest}
+              className="p-4 my-4 bg-transparent border border-white rounded-lg"
+            >
+              <Text className="text-lg font-semibold text-center text-white">
+                Continue as Guest
               </Text>
-              <TouchableOpacity
-                className="flex flex-row justify-center mb-5 p-2 items-center"
-                onPress={handleGuest}
-              >
-                <Text className="text-white font-semibold">Continue as</Text>
-                <Text className="text-base font-semibold underline text-[#f49b33]">
-                  {" "}
-                  Guest User
-                </Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/signin")}
+              className="p-4 my-4 bg-transparent"
+            >
+              <Text className="text-lg font-semibold text-center text-[#f49b33]">
+                Already have an account? Sign in
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View className="flex-1">
-          <Image
-            source={entryImg}
-            className="w-full h-full"
-            resizeMode="contain"
-          />
-        </View>
-        <StatusBar barStyle={"light-content"} backgroundColor={"#2b2b2b"} />
       </ScrollView>
     </SafeAreaView>
   );

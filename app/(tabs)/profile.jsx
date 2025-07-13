@@ -2,21 +2,43 @@ import { View, Text, TouchableOpacity, Alert } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { disconnectWallet, isWalletConnected } from "../../utils/solanaWallet";
+import { authService } from "../../utils/auth";
 
 export default function Profile() {
   const router = useRouter();
-  const [userWallet, setUserWallet] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   const [isWalletUser, setIsWalletUser] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const email = await AsyncStorage.getItem("userEmail");
-      const isGuest = await AsyncStorage.getItem("isGuest");
-      const walletConnected = await isWalletConnected();
-      
-      setUserWallet(email);
-      setIsWalletUser(walletConnected && isGuest !== "true");
+      try {
+        const isGuest = await AsyncStorage.getItem("isGuest");
+        const walletAddress = await authService.getWalletAddress();
+        const username = await authService.getUsername();
+        const isAuthenticated = await authService.isAuthenticated();
+        
+        if (isAuthenticated && walletAddress) {
+          setUserInfo({
+            walletAddress,
+            username,
+            type: 'wallet'
+          });
+          setIsWalletUser(true);
+        } else if (isGuest === "true") {
+          setUserInfo({
+            type: 'guest'
+          });
+          setIsWalletUser(false);
+        } else {
+          setUserInfo(null);
+          setIsWalletUser(false);
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchUserInfo();
@@ -25,14 +47,14 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       if (isWalletUser) {
-        await disconnectWallet();
+        await authService.logout();
       } else {
         // Handle guest logout
         await AsyncStorage.removeItem("userEmail");
         await AsyncStorage.setItem("isGuest", "true");
       }
 
-      setUserWallet(null);
+      setUserInfo(null);
       setIsWalletUser(false);
 
       Alert.alert("Logged out", "You have been logged out successfully.");
@@ -46,21 +68,40 @@ export default function Profile() {
     router.push("/signup");
   };
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-[#2b2b2b]">
+        <Text className="text-white">Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 justify-center items-center bg-[#2b2b2b]">
       <Text className="text-xl text-[#f49b33] font-semibold mb-4">
         User Profile
       </Text>
-      {userWallet ? (
+      
+      {userInfo ? (
         <>
-          <Text className="text-white text-lg mb-2">
-            {isWalletUser ? "Wallet Address:" : "Email:"} {userWallet}
-          </Text>
-          {isWalletUser && (
-            <Text className="text-[#f49b33] text-sm mb-6">
-              Solana Wallet Connected
+          {isWalletUser ? (
+            <>
+              <Text className="text-white text-lg mb-2">
+                Username: {userInfo.username}
+              </Text>
+              <Text className="text-white text-sm mb-2">
+                Wallet: {userInfo.walletAddress.slice(0, 8)}...{userInfo.walletAddress.slice(-4)}
+              </Text>
+              <Text className="text-[#f49b33] text-sm mb-6">
+                Solana Wallet Connected
+              </Text>
+            </>
+          ) : (
+            <Text className="text-white text-lg mb-6">
+              Guest User
             </Text>
           )}
+          
           <TouchableOpacity
             onPress={handleLogout}
             className="p-2 my-2 bg-[#f49b33] text-black rounded-lg mt-10"
@@ -72,6 +113,9 @@ export default function Profile() {
         </>
       ) : (
         <>
+          <Text className="text-white text-lg mb-6">
+            Not signed in
+          </Text>
           <TouchableOpacity
             onPress={handleSignup}
             className="p-2 my-2 bg-[#f49b33] text-black rounded-lg mt-10"
