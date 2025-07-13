@@ -92,6 +92,26 @@ export const authService = {
     }
   },
 
+  async getUserProfile(userId) {
+    try {
+      const response = await api.get(`/auth/profile/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get user profile error:', error);
+      throw error;
+    }
+  },
+
+  async updateProfile(profileData) {
+    try {
+      const response = await api.put('/auth/profile', profileData);
+      return response.data;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      throw error;
+    }
+  },
+
   async isAuthenticated() {
     try {
       const isConnected = await isWalletConnected();
@@ -114,5 +134,25 @@ export const authService = {
 
   async getUsername() {
     return await AsyncStorage.getItem('username');
+  },
+
+  async getUserWithAnalysis() {
+    try {
+      const solanaAddress = await AsyncStorage.getItem('solanaAddress');
+      if (!solanaAddress) {
+        return null;
+      }
+
+      const response = await api.get('/auth/profile/me', {
+        headers: {
+          'x-solana-address': solanaAddress
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Get user with analysis error:', error);
+      return null;
+    }
   }
 }; 
