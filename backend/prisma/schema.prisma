@@ -22,8 +22,10 @@ model User {
   // Off-chain profile data
   username          String
   bio               String?
-  age               Int?
-  gender            String?
+  // --- Onboarding fields ---
+  gender            String   // Now required for registration
+  dateOfBirth       DateTime // Required for registration
+  age               Int?     // (Optional) For fast queries, should be derived from dateOfBirth
   location          String?   // Could be encrypted for privacy
   profilePicture    String?
   verificationStatus String   @default("UNVERIFIED") // VERIFIED, SUSPENDED

@@ -29,14 +29,9 @@ const Signin = () => {
     setIsConnecting(true);
     try {
       const result = await authService.loginWithWallet();
-      
       await AsyncStorage.setItem("isGuest", "false");
-      
-      Alert.alert(
-        "Login Successful!",
-        `Successfully signed in with wallet: ${result.user.solanaAddress.slice(0, 8)}...${result.user.solanaAddress.slice(-4)}`,
-        [{ text: "OK", onPress: () => router.push("/home") }]
-      );
+      // Instead of going to home, go to onboarding name step
+      router.push("/onboarding/name");
     } catch (error) {
       console.error("Login error:", error);
       Alert.alert(
