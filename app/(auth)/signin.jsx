@@ -22,7 +22,7 @@ const Signin = () => {
 
   const handleGuest = async () => {
     await AsyncStorage.setItem("isGuest", "true");
-    router.push("/(tabs)/home");
+    router.push("/(tabs)/matches");
   };
 
   const handleConnectWallet = async () => {
@@ -31,7 +31,7 @@ const Signin = () => {
       const result = await authService.loginWithWallet();
       await AsyncStorage.setItem("isGuest", "false");
       // Redirect to home tabs after successful login
-      router.push("/(tabs)/home");
+      router.push("/(tabs)/matches");
     } catch (error) {
       console.error("Login error:", error);
       Alert.alert(

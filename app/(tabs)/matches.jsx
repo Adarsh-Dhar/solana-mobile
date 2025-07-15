@@ -1,99 +1,112 @@
-import { View, Text, FlatList, Alert, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import {
-  collection,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-const history = () => {
-  const [userEmail, setUserEmail] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const db = getFirestore();
+import { View, Text, TouchableOpacity, Animated, Dimensions, ScrollView, Image } from "react-native";
+import React, { useRef } from "react";
+import { FontAwesome, Feather, Ionicons } from '@expo/vector-icons';
 
-  useEffect(() => {
-    const fetchUserEmail = async () => {
-      const email = await AsyncStorage.getItem("userEmail");
-      setUserEmail(email);
-    };
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-    fetchUserEmail();
-  }, []);
-  const fetchBookings = async () => {
-    if (userEmail) {
-      try {
-        const bookingCollection = collection(db, "bookings");
-        const bookingQuery = query(
-          bookingCollection,
-          where("email", "==", userEmail)
-        );
-        const bookingSnapshot = await getDocs(bookingQuery);
+const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.75;
+const TOP_SPACE = SCREEN_HEIGHT * 0.10;
+const BOTTOM_SPACE = SCREEN_HEIGHT * 0.15;
 
-        const bookingList = bookingSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setBookings(bookingList);
-        console.log("Data is here:", bookingList, bookingSnapshot);
-      } catch (error) {
-        console.log(error);
+const images = [
+  require('../../assets/images/sample1.jpg'),
+  require('../../assets/images/sample2.jpg'),
+  require('../../assets/images/sample3.jpg'),
+];
 
-        Alert.alert("Error", "Could not fetch bookings");
-      }
-    }
-    setLoading(false);
+const BUTTONS = [
+  {
+    key: 'reject',
+    icon: <FontAwesome name="close" size={28} color="#fff" />, // cross
+    bg: 'bg-red-500',
+  },
+  {
+    key: 'like',
+    icon: <FontAwesome name="heart" size={28} color="#fff" />, // heart
+    bg: 'bg-green-500',
+  },
+  {
+    key: 'message',
+    icon: <Feather name="send" size={28} color="#fff" />, // paper plane
+    bg: 'bg-blue-500',
+  },
+];
+
+export default function Matches() {
+  // Animation refs for each button
+  const anims = [useRef(new Animated.Value(1)).current, useRef(new Animated.Value(1)).current, useRef(new Animated.Value(1)).current];
+
+  const handlePress = (idx) => {
+    Animated.sequence([
+      Animated.timing(anims[idx], {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(anims[idx], {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      })
+    ]).start();
   };
-  useEffect(() => {
-    fetchBookings();
-  }, [userEmail]);
 
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-[#2b2b2b]">
-        <Text>Loading....</Text>
-      </SafeAreaView>
-    );
-  }
   return (
-    <SafeAreaView className="flex-1 bg-[#2b2b2b]">
-      {userEmail ? (
-        <FlatList
-          data={bookings}
-          onRefresh={fetchBookings}
-          refreshing={loading}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View className="p-4 border-b border-[#fb9b33]">
-              <Text className="text-white">Date:{item.date}</Text>
-              <Text className="text-white">Slot:{item.slot}</Text>
-              <Text className="text-white">Guests:{item.guests}</Text>
-              <Text className="text-white">Restaurant:{item?.restaurant}</Text>
-              <Text className="text-white">Email:{item.email}</Text>
-            </View>
-          )}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      ) : (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-white mb-4">
-            Please sign in to view your booking history
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/signin")}
-            className="p-2 my-2 bg-[#f49b33]  text-black rounded-lg mt-10"
+    <View className="flex-1 bg-[#2b2b2b]">
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: TOP_SPACE,
+          paddingBottom: BOTTOM_SPACE,
+          alignItems: 'center',
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {images.map((img, idx) => (
+          <View key={idx} className="mb-8">
+            <Image
+              source={img}
+              style={{
+                width: '100%',
+                height: IMAGE_HEIGHT,
+                borderRadius: 24,
+              }}
+              resizeMode="cover"
+              className="mx-auto"
+            />
+          </View>
+        ))}
+      </ScrollView>
+      {/* Fixed Button Group */}
+      <View
+        className="absolute left-0 right-0"
+        style={{
+          bottom: BOTTOM_SPACE * 0.5,
+          height: 80,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 32,
+        }}
+      >
+        {BUTTONS.map((btn, idx) => (
+          <Animated.View
+            key={btn.key}
+            style={{
+              transform: [{ scale: anims[idx] }],
+              marginHorizontal: 16,
+            }}
           >
-            <Text className="text-lg font-semibold text-center">Sign In</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </SafeAreaView>
+            <TouchableOpacity
+              onPress={() => handlePress(idx)}
+              activeOpacity={0.7}
+              className={`w-16 h-16 rounded-full ${btn.bg} justify-center items-center shadow-lg`}
+              style={{ elevation: 6 }}
+            >
+              {btn.icon}
+            </TouchableOpacity>
+          </Animated.View>
+        ))}
+      </View>
+    </View>
   );
-};
-
-export default history;
+}

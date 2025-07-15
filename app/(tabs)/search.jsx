@@ -1,129 +1,99 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, FlatList, Alert, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { authService } from "../../utils/auth";
-
-export default function Profile() {
+import {
+  collection,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const history = () => {
+  const [userEmail, setUserEmail] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [userInfo, setUserInfo] = useState(null);
-  const [isWalletUser, setIsWalletUser] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const db = getFirestore();
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const isGuest = await AsyncStorage.getItem("isGuest");
-        const walletAddress = await authService.getWalletAddress();
-        const username = await authService.getUsername();
-        const isAuthenticated = await authService.isAuthenticated();
-        
-        if (isAuthenticated && walletAddress) {
-          setUserInfo({
-            walletAddress,
-            username,
-            type: 'wallet'
-          });
-          setIsWalletUser(true);
-        } else if (isGuest === "true") {
-          setUserInfo({
-            type: 'guest'
-          });
-          setIsWalletUser(false);
-        } else {
-          setUserInfo(null);
-          setIsWalletUser(false);
-        }
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    const fetchUserEmail = async () => {
+      const email = await AsyncStorage.getItem("userEmail");
+      setUserEmail(email);
     };
 
-    fetchUserInfo();
+    fetchUserEmail();
   }, []);
+  const fetchBookings = async () => {
+    if (userEmail) {
+      try {
+        const bookingCollection = collection(db, "bookings");
+        const bookingQuery = query(
+          bookingCollection,
+          where("email", "==", userEmail)
+        );
+        const bookingSnapshot = await getDocs(bookingQuery);
 
-  const handleLogout = async () => {
-    try {
-      if (isWalletUser) {
-        await authService.logout();
-      } else {
-        // Handle guest logout
-        await AsyncStorage.removeItem("userEmail");
-        await AsyncStorage.setItem("isGuest", "true");
+        const bookingList = bookingSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBookings(bookingList);
+        console.log("Data is here:", bookingList, bookingSnapshot);
+      } catch (error) {
+        console.log(error);
+
+        Alert.alert("Error", "Could not fetch bookings");
       }
-
-      setUserInfo(null);
-      setIsWalletUser(false);
-
-      Alert.alert("Logged out", "You have been logged out successfully.");
-      router.push("/signin");
-    } catch (error) {
-      Alert.alert("Logout Error", "Error while logging out");
     }
+    setLoading(false);
   };
+  useEffect(() => {
+    fetchBookings();
+  }, [userEmail]);
 
-  const handleSignup = () => {
-    router.push("/signup");
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#2b2b2b]">
-        <Text className="text-white">Loading...</Text>
-      </View>
+      <SafeAreaView className="flex-1 justify-center items-center bg-[#2b2b2b]">
+        <Text>Loading....</Text>
+      </SafeAreaView>
     );
   }
-
   return (
-    <View className="flex-1 justify-center items-center bg-[#2b2b2b]">
-      <Text className="text-xl text-[#f49b33] font-semibold mb-4">
-        User Profile
-      </Text>
-      
-      {userInfo ? (
-        <>
-          {isWalletUser ? (
-            <>
-              <Text className="text-white text-lg mb-2">
-                Username: {userInfo.username}
-              </Text>
-              <Text className="text-white text-sm mb-2">
-                Wallet: {userInfo.walletAddress.slice(0, 8)}...{userInfo.walletAddress.slice(-4)}
-              </Text>
-              <Text className="text-[#f49b33] text-sm mb-6">
-                Solana Wallet Connected
-              </Text>
-            </>
-          ) : (
-            <Text className="text-white text-lg mb-6">
-              Guest User
-            </Text>
+    <SafeAreaView className="flex-1 bg-[#2b2b2b]">
+      {userEmail ? (
+        <FlatList
+          data={bookings}
+          onRefresh={fetchBookings}
+          refreshing={loading}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View className="p-4 border-b border-[#fb9b33]">
+              <Text className="text-white">Date:{item.date}</Text>
+              <Text className="text-white">Slot:{item.slot}</Text>
+              <Text className="text-white">Guests:{item.guests}</Text>
+              <Text className="text-white">Restaurant:{item?.restaurant}</Text>
+              <Text className="text-white">Email:{item.email}</Text>
+            </View>
           )}
-          
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="p-2 my-2 bg-[#f49b33] text-black rounded-lg mt-10"
-          >
-            <Text className="text-lg font-semibold text-center">
-              {isWalletUser ? "Disconnect Wallet" : "Logout"}
-            </Text>
-          </TouchableOpacity>
-        </>
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
       ) : (
-        <>
-          <Text className="text-white text-lg mb-6">
-            Not signed in
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-white mb-4">
+            Please sign in to view your booking history
           </Text>
           <TouchableOpacity
-            onPress={handleSignup}
-            className="p-2 my-2 bg-[#f49b33] text-black rounded-lg mt-10"
+            onPress={() => router.push("/signin")}
+            className="p-2 my-2 bg-[#f49b33]  text-black rounded-lg mt-10"
           >
-            <Text className="text-lg font-semibold text-center">Sign Up</Text>
+            <Text className="text-lg font-semibold text-center">Sign In</Text>
           </TouchableOpacity>
-        </>
+        </View>
       )}
-    </View>
+    </SafeAreaView>
   );
-}
+};
+
+export default history;
