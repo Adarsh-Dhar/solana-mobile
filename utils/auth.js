@@ -53,6 +53,12 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
+      
+      // If user doesn't exist (401), throw a specific error
+      if (error.response?.status === 401) {
+        throw new Error('WALLET_NOT_REGISTERED');
+      }
+      
       throw error;
     }
   },

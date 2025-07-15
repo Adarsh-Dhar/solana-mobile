@@ -11,8 +11,8 @@ router.post('/register', [
   body('solanaAddress').isString().isLength({ min: 32, max: 44 }),
   body('mobileAuthToken').optional().isString(),
   body('username').trim().isLength({ min: 2, max: 50 }),
-  body('gender').isString().isLength({ min: 1, max: 20 }),
-  body('dateOfBirth').isISO8601().toDate()
+  body('gender').optional().isString().isLength({ min: 1, max: 20 }),
+  body('dateOfBirth').optional().isISO8601().toDate()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -31,13 +31,16 @@ router.post('/register', [
       return res.status(400).json({ error: 'Wallet already registered' });
     }
 
-    // Optionally calculate age from dateOfBirth
-    const today = new Date();
-    const dob = new Date(dateOfBirth);
-    let age = today.getFullYear() - dob.getFullYear();
-    const m = today.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-      age--;
+    // Calculate age if dateOfBirth is provided
+    let age = null;
+    if (dateOfBirth) {
+      const today = new Date();
+      const dob = new Date(dateOfBirth);
+      age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
     }
 
     // Create user with Solana wallet using schema fields
@@ -46,8 +49,8 @@ router.post('/register', [
         solanaAddress,
         mobileAuthToken,
         username,
-        gender,
-        dateOfBirth: dob,
+        gender: gender || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         age,
         verificationStatus: 'UNVERIFIED' // Default from schema
       },

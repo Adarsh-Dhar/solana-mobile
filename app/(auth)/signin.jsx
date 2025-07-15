@@ -34,11 +34,21 @@ const Signin = () => {
       router.push("/onboarding/name");
     } catch (error) {
       console.error("Login error:", error);
-      Alert.alert(
-        "Login Failed",
-        error.message || "Failed to sign in with wallet. Please try again.",
-        [{ text: "OK" }]
-      );
+      
+      // If wallet is not registered, redirect to signup
+      if (error.message === 'WALLET_NOT_REGISTERED') {
+        Alert.alert(
+          "Wallet Not Registered",
+          "This wallet is not registered. Please sign up to create an account.",
+          [{ text: "OK", onPress: () => router.push("/signup") }]
+        );
+      } else {
+        Alert.alert(
+          "Login Failed",
+          error.message || "Failed to sign in with wallet. Please try again.",
+          [{ text: "OK" }]
+        );
+      }
     } finally {
       setIsConnecting(false);
     }

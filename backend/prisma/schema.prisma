@@ -23,8 +23,8 @@ model User {
   username          String
   bio               String?
   // --- Onboarding fields ---
-  gender            String   // Now required for registration
-  dateOfBirth       DateTime // Required for registration
+  gender            String?   // Optional for initial registration
+  dateOfBirth       DateTime? // Optional for initial registration
   age               Int?     // (Optional) For fast queries, should be derived from dateOfBirth
   location          String?   // Could be encrypted for privacy
   profilePicture    String?

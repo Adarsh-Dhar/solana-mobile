@@ -19,9 +19,14 @@ const isExpoGo = () => {
   return typeof global.Expo !== 'undefined' && global.Expo.Constants.appOwnership === 'expo';
 };
 
+// Check if we're in a web environment
+const isWebEnvironment = () => {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+};
+
 // Mock wallet connection for development
 const mockWalletConnection = async () => {
-  console.log("Running in Expo Go - using fallback wallet connection");
+  console.log("Running in development environment - using fallback wallet connection");
   
   // Simulate wallet connection delay
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -42,8 +47,8 @@ const mockWalletConnection = async () => {
 
 export const connectWallet = async () => {
   try {
-    // If in Expo Go, use fallback implementation
-    if (isExpoGo()) {
+    // If in Expo Go or web environment, use fallback implementation
+    if (isExpoGo() || isWebEnvironment()) {
       return await mockWalletConnection();
     }
 
@@ -95,7 +100,8 @@ export const connectWallet = async () => {
     // If MWA fails, fall back to mock implementation
     if (error.message.includes('SolanaMobileWalletAdapter') || 
         error.message.includes('TurboModuleRegistry') ||
-        error.message.includes('transact is not a function')) {
+        error.message.includes('transact is not a function') ||
+        error.message.includes('mobile wallet protocol')) {
       console.log("MWA not available, using fallback implementation");
       return await mockWalletConnection();
     }
@@ -111,7 +117,7 @@ export const disconnectWallet = async () => {
   try {
     const storedAuthToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
     
-    if (storedAuthToken && !isExpoGo()) {
+    if (storedAuthToken && !isExpoGo() && !isWebEnvironment()) {
       try {
         const mwaModule = await import("@solana-mobile/mobile-wallet-adapter-protocol-web3js");
         const { transact } = mwaModule;
