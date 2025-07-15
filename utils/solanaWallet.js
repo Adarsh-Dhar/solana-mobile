@@ -24,6 +24,17 @@ const isWebEnvironment = () => {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
 };
 
+// Helper to generate a random base58 string of length 32-44
+function randomBase58Address() {
+  const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  const length = Math.floor(Math.random() * (44 - 32 + 1)) + 32;
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  }
+  return result;
+}
+
 // Mock wallet connection for development
 const mockWalletConnection = async () => {
   console.log("Running in development environment - using fallback wallet connection");
@@ -34,13 +45,16 @@ const mockWalletConnection = async () => {
   // Generate a mock auth token
   const mockAuthToken = `mock_auth_${Date.now()}`;
   
+  // Generate a random valid wallet address
+  const randomWalletAddress = randomBase58Address();
+  
   // Store the mock data
   await AsyncStorage.setItem(AUTH_TOKEN_KEY, mockAuthToken);
-  await AsyncStorage.setItem(WALLET_ADDRESS_KEY, FALLBACK_WALLET_ADDRESS);
+  await AsyncStorage.setItem(WALLET_ADDRESS_KEY, randomWalletAddress);
   
   const result = {
     success: true,
-    walletAddress: FALLBACK_WALLET_ADDRESS,
+    walletAddress: randomWalletAddress,
     authToken: mockAuthToken,
   };
   

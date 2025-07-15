@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { connectWallet, disconnectWallet, isWalletConnected } from './solanaWallet';
 
 export const authService = {
-  async registerWithWallet(username) {
+  async registerWithWallet(username, gender, dateOfBirth) {
     try {
       // Connect wallet first
       const walletResult = await connectWallet();
@@ -18,7 +18,9 @@ export const authService = {
       const registrationData = {
         solanaAddress: walletResult.walletAddress,
         mobileAuthToken: walletResult.authToken,
-        username
+        username,
+        gender,
+        dateOfBirth
       };
 
       console.log('Sending registration data:', registrationData);
