@@ -12,12 +12,18 @@ export const authService = {
         throw new Error(walletResult.error || 'Failed to connect wallet');
       }
 
+      console.log('Wallet connection result:', walletResult);
+
       // Register with backend
-      const response = await api.post('/auth/register', {
+      const registrationData = {
         solanaAddress: walletResult.walletAddress,
         mobileAuthToken: walletResult.authToken,
         username
-      });
+      };
+
+      console.log('Sending registration data:', registrationData);
+
+      const response = await api.post('/auth/register', registrationData);
 
       // Store wallet info
       await AsyncStorage.setItem('solanaAddress', walletResult.walletAddress);

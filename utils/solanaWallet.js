@@ -38,11 +38,14 @@ const mockWalletConnection = async () => {
   await AsyncStorage.setItem(AUTH_TOKEN_KEY, mockAuthToken);
   await AsyncStorage.setItem(WALLET_ADDRESS_KEY, FALLBACK_WALLET_ADDRESS);
   
-  return {
+  const result = {
     success: true,
     walletAddress: FALLBACK_WALLET_ADDRESS,
     authToken: mockAuthToken,
   };
+  
+  console.log('Mock wallet connection result:', result);
+  return result;
 };
 
 export const connectWallet = async () => {
