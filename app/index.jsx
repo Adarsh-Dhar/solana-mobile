@@ -17,7 +17,7 @@ export default function Index() {
 
   const handleGuest = async () => {
     await AsyncStorage.setItem("isGuest", "true");
-    router.push("/home");
+    router.push("/(tabs)/home");
   };
 
   return (

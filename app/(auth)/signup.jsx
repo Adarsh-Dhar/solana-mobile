@@ -24,7 +24,7 @@ const Signup = () => {
 
   const handleGuest = async () => {
     await AsyncStorage.setItem("isGuest", "true");
-    router.push("/home");
+    router.push("/(tabs)/home");
   };
 
   const handleConnectWallet = async () => {
@@ -41,11 +41,8 @@ const Signup = () => {
       
       await AsyncStorage.setItem("isGuest", "false");
       
-      Alert.alert(
-        "Registration Successful!",
-        `Successfully registered with wallet: ${result.user.solanaAddress.slice(0, 8)}...${result.user.solanaAddress.slice(-4)}`,
-        [{ text: "OK", onPress: () => router.push("/home") }]
-      );
+      // Redirect to home tabs after successful registration
+      router.push("/(tabs)/home");
     } catch (error) {
       console.error("Registration error:", error);
       Alert.alert(

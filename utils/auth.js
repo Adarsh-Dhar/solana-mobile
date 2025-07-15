@@ -40,25 +40,44 @@ export const authService = {
         throw new Error(walletResult.error || 'Failed to connect wallet');
       }
 
-      // Login with backend
-      const response = await api.post('/auth/login', {
-        solanaAddress: walletResult.walletAddress,
-        mobileAuthToken: walletResult.authToken
-      });
+      // Try to login first
+      try {
+        const response = await api.post('/auth/login', {
+          solanaAddress: walletResult.walletAddress,
+          mobileAuthToken: walletResult.authToken
+        });
 
-      // Store wallet info
-      await AsyncStorage.setItem('solanaAddress', walletResult.walletAddress);
-      await AsyncStorage.setItem('authToken', walletResult.authToken);
+        // Store wallet info
+        await AsyncStorage.setItem('solanaAddress', walletResult.walletAddress);
+        await AsyncStorage.setItem('authToken', walletResult.authToken);
 
-      return response.data;
+        return response.data;
+      } catch (loginError) {
+        // If login fails (user doesn't exist), try to register automatically
+        if (loginError.response?.status === 401) {
+          console.log('User not found, attempting auto-registration...');
+          
+          // Generate a default username from wallet address
+          const defaultUsername = `user_${walletResult.walletAddress.slice(0, 8)}`;
+          
+          const registerResponse = await api.post('/auth/register', {
+            solanaAddress: walletResult.walletAddress,
+            mobileAuthToken: walletResult.authToken,
+            username: defaultUsername
+          });
+
+          // Store wallet info
+          await AsyncStorage.setItem('solanaAddress', walletResult.walletAddress);
+          await AsyncStorage.setItem('authToken', walletResult.authToken);
+          await AsyncStorage.setItem('username', defaultUsername);
+
+          return registerResponse.data;
+        }
+        
+        throw loginError;
+      }
     } catch (error) {
       console.error('Login error:', error);
-      
-      // If user doesn't exist (401), throw a specific error
-      if (error.response?.status === 401) {
-        throw new Error('WALLET_NOT_REGISTERED');
-      }
-      
       throw error;
     }
   },

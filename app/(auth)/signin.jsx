@@ -22,7 +22,7 @@ const Signin = () => {
 
   const handleGuest = async () => {
     await AsyncStorage.setItem("isGuest", "true");
-    router.push("/home");
+    router.push("/(tabs)/home");
   };
 
   const handleConnectWallet = async () => {
@@ -30,25 +30,15 @@ const Signin = () => {
     try {
       const result = await authService.loginWithWallet();
       await AsyncStorage.setItem("isGuest", "false");
-      // Instead of going to home, go to onboarding name step
-      router.push("/onboarding/name");
+      // Redirect to home tabs after successful login
+      router.push("/(tabs)/home");
     } catch (error) {
       console.error("Login error:", error);
-      
-      // If wallet is not registered, redirect to signup
-      if (error.message === 'WALLET_NOT_REGISTERED') {
-        Alert.alert(
-          "Wallet Not Registered",
-          "This wallet is not registered. Please sign up to create an account.",
-          [{ text: "OK", onPress: () => router.push("/signup") }]
-        );
-      } else {
-        Alert.alert(
-          "Login Failed",
-          error.message || "Failed to sign in with wallet. Please try again.",
-          [{ text: "OK" }]
-        );
-      }
+      Alert.alert(
+        "Login Failed",
+        error.message || "Failed to sign in with wallet. Please try again.",
+        [{ text: "OK" }]
+      );
     } finally {
       setIsConnecting(false);
     }
